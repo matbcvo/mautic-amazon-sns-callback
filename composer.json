@@ -1,0 +1,27 @@
+{
+    "name": "matbcvo/mautic-amazon-sns-callback",
+    "description": "A Mautic 5 plugin to handle Amazon SNS callbacks for bounce and complaint notifications.",
+    "type": "mautic-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Martin Vooremäe",
+            "email": "martin.vooremae@gmail.com"
+        }
+    ],
+    "keywords": [
+        "mautic",
+        "plugin",
+        "integration",
+        "amazon",
+        "sns"
+    ],
+    "require": {
+        "php": ">=8.0",
+        "mautic/core-lib": "^5.0"
+    },
+    "extra": {
+        "install-directory-name": "AmazonSnsCallbackBundle"
+    },
+    "minimum-stability": "dev"
+}
