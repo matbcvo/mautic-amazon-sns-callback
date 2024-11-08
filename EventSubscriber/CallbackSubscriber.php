@@ -87,6 +87,19 @@ class CallbackSubscriber implements EventSubscriberInterface
                 $this->processComplaint($payload);
                 break;
             case self::TYPE_NOTIFICATION:
+                if (isset($payload['Message'])) {
+                    $innerPayload = json_decode($payload['Message'], true);
+
+                    if (JSON_ERROR_NONE === json_last_error() && is_array($innerPayload)) {
+                        $this->processPayload($innerPayload);
+
+                        return;
+                    } else {
+                        $this->logger->warning('Invalid inner JSON in Message field of TYPE_NOTIFICATION.');
+                    }
+                }
+                $this->logger->info('Received TYPE_NOTIFICATION without inner message or with unsupported content.');
+                break;
             case self::TYPE_DELIVERY:
                 // Nothing to do
                 break;
