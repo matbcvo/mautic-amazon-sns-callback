@@ -182,7 +182,7 @@ class CallbackSubscriber implements EventSubscriberInterface
         $complainedRecipients = $payload['complaint']['complainedRecipients'] ?? [];
 
         foreach ($complainedRecipients as $complainedRecipient) {
-            $address = Address::create($complainedRecipient);
+            $address = Address::create($complainedRecipient['emailAddress']);
 
             $reason = $payload['complaint']['complaintFeedbackType'] ?? 'unknown';
 
