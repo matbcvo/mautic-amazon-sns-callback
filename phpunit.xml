@@ -3,19 +3,18 @@
 <!-- http://www.phpunit.de/manual/current/en/appendixes.configuration.html -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.5/phpunit.xsd"
    colors                      = "true"
-   failOnWarning               = "true"
-   bootstrap                   = "autoload.php">
+   failOnWarning               = "true">
 
     <testsuites>
         <testsuite name="unit">
             <!-- <directory>Tests/Unit</directory> -->
         </testsuite>
         <testsuite name="functional">
-            <!-- <directory>Tests/Functional</directory> -->
+            <directory>Tests/Functional</directory>
         </testsuite>
         <testsuite name="all">
             <!-- <directory>Tests/Unit</directory> -->
-            <!-- <directory>Tests/Functional</directory> -->
+            <directory>Tests/Functional</directory>
         </testsuite>
     </testsuites>
 
