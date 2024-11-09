@@ -72,7 +72,7 @@ class CallbackSubscriber implements EventSubscriberInterface
     /**
      * @param array<string, mixed> $payload
      */
-    public function processPayload(array $payload): void
+    private function processPayload(array $payload): void
     {
         $type = $payload['Type'] ?? $payload['eventType'] ?? $payload['notificationType'] ?? null;
 
@@ -87,18 +87,7 @@ class CallbackSubscriber implements EventSubscriberInterface
                 $this->processComplaint($payload);
                 break;
             case self::TYPE_NOTIFICATION:
-                if (isset($payload['Message'])) {
-                    $innerPayload = json_decode($payload['Message'], true);
-
-                    if (JSON_ERROR_NONE === json_last_error() && is_array($innerPayload)) {
-                        $this->processPayload($innerPayload);
-
-                        return;
-                    } else {
-                        $this->logger->warning('Invalid inner JSON in Message field of TYPE_NOTIFICATION.');
-                    }
-                }
-                $this->logger->info('Received TYPE_NOTIFICATION without inner message or with unsupported content.');
+                $this->processNotification($payload);
                 break;
             case self::TYPE_DELIVERY:
                 // Nothing to do
@@ -111,7 +100,7 @@ class CallbackSubscriber implements EventSubscriberInterface
     /**
      * @param array<string, mixed> $payload
      */
-    public function processSubscriptionConfirmation(array $payload): void
+    private function processSubscriptionConfirmation(array $payload): void
     {
         if (!isset($payload['SubscribeURL'])) {
             throw new \InvalidArgumentException('SubscribeURL is missing in the payload.');
@@ -137,13 +126,13 @@ class CallbackSubscriber implements EventSubscriberInterface
     /**
      * @param array<string, mixed> $payload
      */
-    public function processBounce(array $payload): void
+    private function processBounce(array $payload): void
     {
         if ('Permanent' !== $payload['bounce']['bounceType']) {
             return;
         }
 
-        $emailId = $this->getEmailIdFromHeaders($payload['mail']['headers'] ?? []);
+        $emailId = $this->getEmailId($payload);
 
         $bouncedRecipients = $payload['bounce']['bouncedRecipients'] ?? [];
 
@@ -175,9 +164,9 @@ class CallbackSubscriber implements EventSubscriberInterface
     /**
      * @param array<string, mixed> $payload
      */
-    public function processComplaint(array $payload): void
+    private function processComplaint(array $payload): void
     {
-        $emailId = $this->getEmailIdFromHeaders($payload['mail']['headers'] ?? []);
+        $emailId = $this->getEmailId($payload);
 
         $complainedRecipients = $payload['complaint']['complainedRecipients'] ?? [];
 
@@ -198,10 +187,31 @@ class CallbackSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param array<int, array<string, mixed>> $headers
+     * @param array<string, mixed> $payload
      */
-    private function getEmailIdFromHeaders(array $headers): ?string
+    private function processNotification(array $payload): void
     {
+        if (isset($payload['Message'])) {
+            $innerPayload = json_decode($payload['Message'], true);
+
+            if (JSON_ERROR_NONE === json_last_error() && is_array($innerPayload)) {
+                $this->processPayload($innerPayload);
+
+                return;
+            } else {
+                $this->logger->warning('Invalid inner JSON in Message field of TYPE_NOTIFICATION.');
+            }
+        }
+        $this->logger->info('Received TYPE_NOTIFICATION without inner message or with unsupported content.');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function getEmailId(array $payload): ?string
+    {
+        $headers = $payload['mail']['headers'] ?? [];
+
         foreach ($headers as $header) {
             if (isset($header['name']) && 'X-EMAIL-ID' === strtoupper($header['name'])) {
                 return $header['value'];
