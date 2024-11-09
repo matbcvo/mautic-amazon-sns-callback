@@ -13,8 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CallbackSubscriberTest extends MauticMysqlTestCase
 {
-    private $coreParametersHelperMock;
-
     protected function setUp(): void
     {
         $this->configParams['mailer_dsn'] = 'ses+api://access-key:secret-key@default';
@@ -87,6 +85,9 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
         return $lead;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function getPayloadForBounce(): array
     {
         return [
@@ -132,6 +133,9 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function getPayloadForComplaint(): array
     {
         return [
