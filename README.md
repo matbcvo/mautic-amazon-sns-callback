@@ -2,6 +2,15 @@
 
 This Mautic 5 plugin integrates with Amazon SNS (Simple Notification Service) to handle bounce, complaint, and other notifications for email deliverability. By using this plugin, you can manage and process Amazon SES (Simple Email Service) feedback notifications directly within Mautic, helping maintain list health and ensuring accurate email analytics.
 
+Supported mailer schemes:
+```
+ses+smtp
+ses+api
+ses+https
+```
+
+The `symfony/amazon-mailer` package is recommended for use with this plugin.
+
 ## Installation
 
 To install the Mautic Amazon SNS Callback plugin, follow these steps:
