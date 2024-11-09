@@ -6,5 +6,5 @@ return [
     'name'        => 'Amazon SNS Callback',
     'description' => 'Handles Amazon SNS callbacks for bounce and complaint notifications.',
     'author'      => 'Martin Vooremäe',
-    'version'     => '1.0.0',
+    'version'     => '1.0.2',
 ];
