@@ -23,5 +23,6 @@
     "extra": {
         "install-directory-name": "AmazonSnsCallbackBundle"
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
