@@ -17,7 +17,7 @@ jobs:
       matrix:
         php-versions: ["8.1"]
         db-types: ["mysql"]
-        mautic-versions: ["5.x"]
+        mautic-versions: ["6.x"]
 
     name: Tests on PHP ${{ matrix.php-versions }}, ${{ matrix.db-types }}, Mautic ${{ matrix.mautic-versions }}
 
@@ -40,13 +40,13 @@ jobs:
 
     steps:
       - name: Checkout Mautic
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: mautic/mautic
           ref: ${{ matrix.mautic-versions }}
 
       - name: Checkout this plugin
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ${{ env.PLUGIN_DIR }}
 
@@ -126,7 +126,7 @@ jobs:
           verbose: true
 
       - name: Upload logs as artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mautic-logs
           path: var/logs/
