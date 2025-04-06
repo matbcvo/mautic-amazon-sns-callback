@@ -17,7 +17,7 @@ jobs:
       matrix:
         php-versions: ["8.1"]
         db-types: ["mysql"]
-        mautic-versions: ["5.x"]
+        mautic-versions: ["6.x"]
 
     name: Tests on PHP ${{ matrix.php-versions }}, ${{ matrix.db-types }}, Mautic ${{ matrix.mautic-versions }}
 
