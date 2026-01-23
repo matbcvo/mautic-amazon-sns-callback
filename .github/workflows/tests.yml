@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        php-versions: ["8.1"]
+        php-versions: ["8.2"]
         db-types: ["mysql"]
         mautic-versions: ["7.x"]
 
