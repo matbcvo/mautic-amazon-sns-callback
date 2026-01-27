@@ -265,16 +265,9 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
         $method = new \ReflectionMethod($subscriber, 'processSubscriptionConfirmation');
         $method->setAccessible(true);
 
-        try {
-            $method->invoke($subscriber, $payload);
-            $this->fail('Expected runtime exception to stop execution');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertNotSame(
-                'SubscribeURL host is not an allowed SNS endpoint.',
-                $e->getMessage()
-            );
-        } catch (\RuntimeException $e) {
-            $this->addToAssertionCount(1);
-        }
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('stop here');
+
+        $method->invoke($subscriber, $payload);
     }
 }
