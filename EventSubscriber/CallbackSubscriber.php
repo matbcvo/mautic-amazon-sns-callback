@@ -106,8 +106,22 @@ class CallbackSubscriber implements EventSubscriberInterface
             throw new \InvalidArgumentException('SubscribeURL is missing in the payload.');
         }
 
-        if (!filter_var($payload['SubscribeURL'], FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid SubscribeURL provided in the payload.');
+        $subscribeUrl = $payload['SubscribeURL'];
+        $parts        = parse_url($subscribeUrl);
+
+        if (!is_array($parts)) {
+            throw new \InvalidArgumentException('Invalid SubscribeURL.');
+        }
+
+        $scheme = $parts['scheme'] ?? '';
+        $host   = $parts['host'] ?? '';
+
+        if ('https' !== $scheme) {
+            throw new \InvalidArgumentException('SubscribeURL must be https.');
+        }
+
+        if (!preg_match('/^sns\.[a-z0-9-]+\.amazonaws\.com$/i', $host)) {
+            throw new \InvalidArgumentException('SubscribeURL host is not an allowed SNS endpoint.');
         }
 
         try {

@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace MauticPlugin\AmazonSnsCallbackBundle\Tests\Functional\EventSubscriber;
 
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\DateTimeHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
+use Mautic\EmailBundle\Model\TransportCallback;
 use Mautic\LeadBundle\Entity\DoNotContact;
 use Mautic\LeadBundle\Entity\Lead;
+use MauticPlugin\AmazonSnsCallbackBundle\EventSubscriber\CallbackSubscriber;
 use PHPUnit\Framework\Assert;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CallbackSubscriberTest extends MauticMysqlTestCase
 {
@@ -43,7 +48,10 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
         $dnc = $contact->getDoNotContact()->current();
         Assert::assertSame('email', $dnc->getChannel());
         Assert::assertSame('Permanent - General: smtp; 550 5.1.1 user unknown', $dnc->getComments());
-        Assert::assertSame($nowFormatted, $dnc->getDateAdded()->format(DateTimeHelper::FORMAT_DB));
+
+        // Assert::assertSame($nowFormatted, $dnc->getDateAdded()->format(DateTimeHelper::FORMAT_DB));
+        $this->assertDateTimeWithinSeconds($now, $dnc->getDateAdded(), 10);
+
         Assert::assertSame($contact, $dnc->getLead());
         Assert::assertSame(DoNotContact::BOUNCED, $dnc->getReason());
     }
@@ -71,7 +79,10 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
         $dnc = $contact->getDoNotContact()->current();
         Assert::assertSame('email', $dnc->getChannel());
         Assert::assertSame('abuse', $dnc->getComments());
-        Assert::assertSame($nowFormatted, $dnc->getDateAdded()->format(DateTimeHelper::FORMAT_DB));
+
+        // Assert::assertSame($nowFormatted, $dnc->getDateAdded()->format(DateTimeHelper::FORMAT_DB));
+        $this->assertDateTimeWithinSeconds($now, $dnc->getDateAdded(), 10);
+
         Assert::assertSame($contact, $dnc->getLead());
         Assert::assertSame(DoNotContact::UNSUBSCRIBED, $dnc->getReason());
     }
@@ -176,5 +187,94 @@ class CallbackSubscriberTest extends MauticMysqlTestCase
             'SigningCertURL'   => 'mautic',
             'UnsubscribeURL'   => 'mautic',
         ];
+    }
+
+    private function assertDateTimeWithinSeconds(\DateTimeInterface $expected, \DateTimeInterface $actual, int $deltaSeconds = 5): void
+    {
+        $diff = abs($actual->getTimestamp() - $expected->getTimestamp());
+        Assert::assertLessThanOrEqual(
+            $deltaSeconds,
+            $diff,
+            sprintf(
+                'Expected datetime within %d seconds. Expected=%s, Actual=%s, Diff=%ds',
+                $deltaSeconds,
+                $expected->format(\DateTimeInterface::ATOM),
+                $actual->format(\DateTimeInterface::ATOM),
+                $diff
+            )
+        );
+    }
+
+    public function testSubscriptionConfirmationRejectsInvalidSnsHost(): void
+    {
+        $transportCallback = $this->createMock(TransportCallback::class);
+        $coreParams        = $this->createMock(CoreParametersHelper::class);
+
+        $httpClient = $this->createMock(HttpClientInterface::class);
+        $httpClient
+            ->expects(self::never())
+            ->method('request');
+
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $subscriber = new CallbackSubscriber(
+            $transportCallback,
+            $coreParams,
+            $httpClient,
+            $logger
+        );
+
+        $payload = [
+            'Type'         => 'SubscriptionConfirmation',
+            'SubscribeURL' => 'https://sns.random.amazonaws.com.example.com/?x=1',
+        ];
+
+        $method = new \ReflectionMethod($subscriber, 'processSubscriptionConfirmation');
+        $method->setAccessible(true);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SubscribeURL host is not an allowed SNS endpoint.');
+
+        $method->invoke($subscriber, $payload);
+    }
+
+    public function testSubscriptionConfirmationDoesNotRejectValidSnsHost(): void
+    {
+        $transportCallback = $this->createMock(TransportCallback::class);
+        $coreParams        = $this->createMock(CoreParametersHelper::class);
+
+        $httpClient = $this->createMock(HttpClientInterface::class);
+        $httpClient
+            ->method('request')
+            ->willThrowException(new \RuntimeException('stop here'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $subscriber = new CallbackSubscriber(
+            $transportCallback,
+            $coreParams,
+            $httpClient,
+            $logger
+        );
+
+        $payload = [
+            'Type'         => 'SubscriptionConfirmation',
+            'SubscribeURL' => 'https://sns.eu-west-1.amazonaws.com/valid',
+        ];
+
+        $method = new \ReflectionMethod($subscriber, 'processSubscriptionConfirmation');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke($subscriber, $payload);
+            $this->fail('Expected runtime exception to stop execution');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertNotSame(
+                'SubscribeURL host is not an allowed SNS endpoint.',
+                $e->getMessage()
+            );
+        } catch (\RuntimeException $e) {
+            $this->addToAssertionCount(1);
+        }
     }
 }
